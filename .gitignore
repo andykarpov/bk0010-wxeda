@@ -20,5 +20,8 @@ syn/incremental_db
 syn/incrementa_db/*
 syn/bk0010-wxeda.map
 syn/bk0010-wxeda.qws
+bk0010-wxeda.qws
 *.ghw
 *.cf
+.DS_Store
+
