@@ -52,10 +52,14 @@ always @(posedge clk )
      ResetCntY  <= (CounterY[9:0] == 625);
   end
 
+parameter HSYNC_TIME  = 25;
+parameter HSYNC_START = 535;
+
 //signal synchronizer
 always @(posedge clk)
   begin
-     vga_h_sync <= ~((CounterX > 565) && (CounterX < 590));
+     //vga_h_sync <= ~((CounterX > 565) && (CounterX < 590));
+     vga_h_sync <= ~((CounterX > HSYNC_START) && (CounterX < (HSYNC_START + HSYNC_TIME)));
      vga_v_sync <= ~(CounterY == 554);
     // Valid    <=  (CounterX  < 512) && (CounterX  != 0) && (CounterY < 511 );
      Valid  <=  ~CounterY[9];
