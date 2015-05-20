@@ -167,10 +167,8 @@ end component;
 
 -- reset and clk
 signal reset 		: std_logic;
-signal start 		: std_logic;
 signal locked 		: std_logic;
-signal hypercharge 	: std_logic;
-signal clk_75, clk_50, clk_25 : std_logic;
+signal clk_100, clk_75, clk_50, clk_25 : std_logic;
 
 -- ram
 signal ram_a_bus	: std_logic_vector(21 downto 0);
@@ -190,6 +188,14 @@ signal vga_wren 	: std_logic;
 -- sound
 signal tape_in 		: std_logic;
 signal tape_out 	: std_logic;
+signal beeper 		: std_logic;
+
+-- buttons
+signal btn_reset 	: std_logic;
+signal btn_button0 	: std_logic;
+signal btn_hypercharge : std_logic;
+signal btn_color 	: std_logic;
+signal switch 		: std_logic_vector(7 downto 0) := "10000000"; --(7 - cpu_pause_n=1, 6 - enable_bpts=0, 5,3,4,2,1 = 0, 0 - color=0)
 
 begin
 
@@ -198,9 +204,10 @@ U0: entity work.altpll1
 port map (
 	inclk0		=> CLK,		--  48.0 MHz
 	locked		=> locked,
-	c0 			=> clk_75, 	-- 75 MHz
-	c1			=> clk_50, 	-- 50 MHz
-	c2			=> clk_25 	-- 25 MHz
+	c0 			=> clk_100, -- 100 MHz
+	c1 			=> clk_75, 	-- 75 MHz
+	c2			=> clk_50, 	-- 50 MHz
+	c3			=> clk_25 	-- 25 MHz
 );
 
 -- SDRAM Controller
@@ -230,6 +237,7 @@ port map (
 	membusy 	=> ram_busy
 );
 
+-- Video RAM
 U2: vram
 port map(
 	byteena_a 	=> (not ram_ub_n) & (not ram_lb_n),
@@ -243,12 +251,13 @@ port map(
 
 vga_wren <= '1' when ram_we_n = '0' and ram_a_bus(17 downto 13) = "00001" else '0';
 
+-- BK0010
 U3: bk0010 
 port map (
 	clk50 		=> clk_50,
 	clk25 		=> clk_25,
 	reset_in 	=> reset,
-	hypercharge_i => hypercharge,
+	hypercharge_i => btn_hypercharge,
 
 	PS2_Clk 	=> PS2_CLK,
 	PS2_Data	=> PS2_DAT,
@@ -292,59 +301,70 @@ port map (
 
 	redleds 		=> open,
 	greenleds 	=> open,
-	button0 	=> not(KEYS(2)),
-	switch 		=> "10000000" --(7 - cpu_pause_n=1, 6 - enable_bpts=0, 5,3,4,2,1 = 0, 0 - color=0)
+	button0 	=> btn_button0,
+	switch 		=> switch 
         
 );
 
---U4: entity work.soundcodec 
---port map (
---	reset 		=> reset,
---	clk 		=> clk_75,
---	tapein 		=> tapein,
---	tapeout 	=> tapeout,
+-- Sound unit
+U4: entity work.sound 
+port map (
+	reset 		=> reset,
+	clk 		=> clk_100,
 
---	out_l 		=> DAC_OUT_L,
---	out_r 		=> DAC_OUT_R
---);
+	tape_in 		=> tape_in,
+	tape_out 	=> tape_out,
+	beeper 		=> beeper,
+
+	ADC_DAT 	=> ADC_DAT,
+	ADC_CLK		=> ADC_CLK,
+	ADC_CS_N	=> ADC_CS_N,
+
+	out_l 		=> DAC_OUT_L,
+	out_r 		=> DAC_OUT_R
+);
+
+-- Debounced reset button
+U5: entity work.button 
+port map (
+	clk 		=> clk_25,
+	button 		=> KEYS(3),
+	down 		=> btn_reset
+);
+
+-- Debounced button0 button
+U6: entity work.button 
+port map (
+	clk 		=> clk_25,
+	button 		=> KEYS(2),
+	down 		=> btn_button0	
+);
+
+-- Debounced hypercharge switch
+U7: entity work.button 
+port map (
+	clk 		=> clk_25,
+	button 		=> KEYS(1),
+	switch 		=> btn_hypercharge	
+);
+
+-- Debounced color switch
+U8: entity work.button 
+port map (
+	clk 		=> clk_25,
+	button 		=> KEYS(0),
+	switch 		=> btn_color
+);
 
 -- logic
 
-reset <= not(KEYS(3)) or not locked;
-hypercharge <= '0';
+reset <= btn_reset or not locked;
+switch(0) <= btn_color;
 
---process (clk_25, reset) 
---variable debctr : integer range 0 to 65535 := 0;
---variable debsamp : std_logic := '0';
---begin
---	if reset = '1' then 
---		debsamp := '0';
---        debctr := 0;
---    elsif rising_edge(clk_25) then
-
---    	if KEYS(3) = '0' then
---    		debctr := 65535;
---    	elsif debctr > 0 then
---    		debctr := debctr - 1;
---    	end if;
-
---		if (debctr > 0) then 
---			debsamp := '1';
---		else 
---			debsamp := '0';
---		end if;
-        
---        if (debsamp = '0' and debctr > 0) then 
---        	hypercharge <= not(hypercharge);
---    	end if;
-
---	end if;
---end process;
-
--- Global SDRAM signals
+-- Global signals
 SDRAM_CKE <= '1'; -- pullup
 -- SDRAM_CS_N <= '0'; -- pulldown
 SDRAM_CLK <= clk_75;
-BUZZER <= '1';
+BUZZER <= '1'; -- disabled
 
 end bk0010_wxeda_arch;

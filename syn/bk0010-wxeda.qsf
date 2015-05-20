@@ -169,6 +169,7 @@ set_global_assignment -name VERILOG_FILE ../rtl/memory/memmap.v
 set_global_assignment -name VERILOG_FILE ../rtl/keyboard/translate.v
 set_global_assignment -name VERILOG_FILE ../rtl/keyboard/kbd_intf.v
 set_global_assignment -name VERILOG_FILE ../rtl/keyboard/ps2_kbd.v
+set_global_assignment -name VHDL_FILE ../rtl/keyboard/button.vhd
 set_global_assignment -name VERILOG_FILE ../rtl/video/vga1.v
 set_global_assignment -name VERILOG_FILE ../rtl/bootrom/bootrom.v
 set_global_assignment -name QIP_FILE ../rtl/bootrom/bootrom.qip
@@ -176,4 +177,7 @@ set_global_assignment -name VERILOG_FILE ../rtl/sdcard/spi.v
 set_global_assignment -name VERILOG_FILE ../rtl/timer/vptimer.v
 set_global_assignment -name VERILOG_FILE ../rtl/video/vram.v
 set_global_assignment -name QIP_FILE ../rtl/video/vram.qip
+set_global_assignment -name VHDL_FILE ../rtl/sound/dac.vhd
+set_global_assignment -name VHDL_FILE ../rtl/sound/tlc549.vhd
+set_global_assignment -name VHDL_FILE ../rtl/sound/sound.vhd
 set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top
